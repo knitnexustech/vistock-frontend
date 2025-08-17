@@ -79,6 +79,7 @@ export default function PublicProductPage() {
   } = useGet<ProductDetailResponse>(
     ["public", "products", tenantId, barcode],
     PRODUCT_API_ENDPOINTS.GET_PUBLIC_BY_BARCODE(tenantId, barcode),
+    undefined, // No URL parameters needed
     {
       enabled: shouldFetchPublic, // Only fetch when we've determined user should see public view
     }
