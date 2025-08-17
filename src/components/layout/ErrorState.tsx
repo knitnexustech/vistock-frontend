@@ -26,11 +26,11 @@ export default function ErrorState({
         <AlertCircle className="w-12 h-12 text-[var(--error)] mx-auto mb-4" />
         <div className="text-[var(--error)] text-lg mb-2">{title}</div>
         <div className="text-[var(--text-muted)] text-sm">{description}</div>
-        {error && (
+        {error ? (
           <div className="mt-4 text-xs text-[var(--text-muted)] bg-[var(--error)]/5 p-2 rounded">
-            {error.message || "Unknown error occurred"}
+            {(error as Error)?.message || "Unknown error occurred"}
           </div>
-        )}
+        ) : null}
         <button
           onClick={handleGoBack}
           className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary-light)] transition-colors cursor-pointer"

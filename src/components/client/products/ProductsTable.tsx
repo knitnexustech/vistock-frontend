@@ -82,7 +82,7 @@ export default function ProductsTable({
     src:
       product.image && isValidImageUrl(product.image)
         ? product.image
-        : ImageNotAvailable,
+        : ImageNotAvailable.src,
     alt: product.name,
   }));
 
@@ -339,7 +339,10 @@ export default function ProductsTable({
         enableColumnVisibility={true}
         enableRowSelection={enableRowSelection}
         isLoading={isLoading}
-        pagination={pagination}
+        pagination={{
+          ...pagination,
+          total: pagination.totalProducts,
+        }}
         onPageChange={onPageChange}
         onNextPage={onNextPage}
         onPreviousPage={onPreviousPage}

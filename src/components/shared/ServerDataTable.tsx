@@ -43,7 +43,7 @@ interface ServerDataTableProps<TData> {
     page: number;
     limit: number;
     totalPages: number;
-    totalProducts: number;
+    total: number;
     hasNextPage: boolean;
     hasPreviousPage: boolean;
   };

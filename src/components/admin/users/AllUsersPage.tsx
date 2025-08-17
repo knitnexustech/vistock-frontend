@@ -31,7 +31,6 @@ export default function AllUsersPage() {
     goToPage,
     nextPage,
     previousPage,
-    refetch,
   } = usePaginatedUsers(1, 10);
 
   const handleEditUser = (user: User) => {
@@ -51,9 +50,9 @@ export default function AllUsersPage() {
   if (error) {
     return (
       <ErrorState
-        message="Failed to load users"
+        title="Failed to load users"
         description={(error as ApiError)?.message || "Please try again later"}
-        onRetry={() => refetch()}
+        error={error}
       />
     );
   }

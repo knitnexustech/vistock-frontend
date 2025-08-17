@@ -78,6 +78,7 @@ export function usePaginatedProducts(
   } = useGet<ProductsResponse>(
     createQueryKey(),
     buildEndpoint(),
+    undefined,
     {
       // Only fetch if search is empty or has at least 3 characters
       enabled: !debouncedSearch || debouncedSearch.length >= 3,

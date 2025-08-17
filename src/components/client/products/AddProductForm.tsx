@@ -159,7 +159,11 @@ export default function AddProductForm() {
 
       const productData = {
         ...data,
-        image: imageUrl,
+        image: imageUrl || "",
+        description: data.description || "",
+        colour: data.colour || "",
+        MRP: data.MRP || 0,
+        comment: data.comment || "",
         barcode: "",
       };
 

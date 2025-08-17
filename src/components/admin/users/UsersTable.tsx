@@ -154,7 +154,10 @@ export default function UsersTable({
       itemName="user"
       enableColumnVisibility={true}
       isLoading={isLoading}
-      pagination={pagination}
+      pagination={{
+        ...pagination,
+        total: pagination.totalUsers,
+      }}
       onPageChange={onPageChange}
       onNextPage={onNextPage}
       onPreviousPage={onPreviousPage}

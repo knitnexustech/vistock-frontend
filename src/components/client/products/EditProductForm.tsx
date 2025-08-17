@@ -217,8 +217,6 @@ export default function EditProductForm({ productId }: EditProductFormProps) {
 
       // Only send changed fields
       const updateData: UpdateProductRequest = {};
-      
-      if (data.item_code !== product?.item_code) updateData.item_code = data.item_code;
       if (data.name !== product?.name) updateData.name = data.name;
       if (data.description !== product?.description) updateData.description = data.description;
       if (data.item_group !== product?.item_group) updateData.item_group = data.item_group;
