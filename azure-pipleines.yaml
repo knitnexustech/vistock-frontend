@@ -1,0 +1,101 @@
+trigger:
+  branches:
+    include:
+      - main
+
+stages:
+  # ------------------- DEV -------------------
+  - stage: Build_Dev
+    displayName: "Build Frontend (Dev)"
+    variables:
+      - group: frontend-dev-secrets # ✅ Dev secrets
+    jobs:
+      - job: Build
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+          - task: NodeTool@0
+            inputs:
+              versionSpec: "18.x"
+          - script: |
+              curl -fsSL https://bun.sh/install | bash
+              export PATH=$HOME/.bun/bin:$PATH
+              bun install
+              bun run build
+            displayName: "Install & Build Frontend (Dev with Bun)"
+
+  - stage: Deploy_Dev
+    displayName: "Deploy Frontend (Dev to Vercel)"
+    dependsOn: Build_Dev
+    variables:
+      - group: frontend-dev-secrets # ✅ Dev secrets again
+    jobs:
+      - job: Deploy
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - script: |
+              curl -fsSL https://bun.sh/install | bash
+              export PATH=$HOME/.bun/bin:$PATH
+              bun add -g vercel
+              vercel deploy --prebuilt --yes \
+                --token $(VERCEL_TOKEN) \
+                --scope $(VERCEL_SCOPE) \
+                --env-file .env.dev
+            displayName: "Deploy to Vercel Dev"
+
+  # ------------------- PROD -------------------
+  - stage: Build_Prod
+    displayName: "Build Frontend (Prod)"
+    dependsOn: Deploy_Dev
+    condition: succeeded()
+    variables:
+      - group: frontend-prod-secrets # ✅ Prod secrets
+    jobs:
+      - deployment: Build
+        displayName: "Build Frontend (Prod)"
+        environment: PROD # 👈 Approval required here
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: NodeTool@0
+                  inputs:
+                    versionSpec: "18.x"
+                - script: |
+                    curl -fsSL https://bun.sh/install | bash
+                    export PATH=$HOME/.bun/bin:$PATH
+                    bun install
+                    bun run build
+                  displayName: "Install & Build Frontend (Prod with Bun)"
+
+  - stage: Deploy_Prod
+    displayName: "Deploy Frontend (Prod to Vercel)"
+    dependsOn: Build_Prod
+    condition: succeeded()
+    variables:
+      - group: frontend-prod-secrets # ✅ Prod secrets again
+    jobs:
+      - deployment: Deploy
+        displayName: "Deploy Frontend (Prod)"
+        environment: PROD # 👈 Approval required here too
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: |
+                    curl -fsSL https://bun.sh/install | bash
+                    export PATH=$HOME/.bun/bin:$PATH
+                    bun add -g vercel
+                    vercel deploy --prod --prebuilt --yes \
+                      --token $(VERCEL_TOKEN) \
+                      --scope $(VERCEL_SCOPE) \
+                      --env-file .env.prod
+                  displayName: "Deploy to Vercel Prod"
+
