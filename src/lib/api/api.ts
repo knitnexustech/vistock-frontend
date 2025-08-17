@@ -40,6 +40,7 @@ export async function apiRequest<T = any>(
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: "include",
     });
 
     // Handle non-2xx responses
@@ -52,7 +53,9 @@ export async function apiRequest<T = any>(
       }
 
       throw new ApiError(
-        errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+        errorData.error ||
+          errorData.message ||
+          `HTTP ${response.status}: ${response.statusText}`,
         response.status,
         response.statusText,
         errorData
@@ -104,4 +107,3 @@ export async function authenticatedApiRequest<T = any>(
 
 // Specific API endpoints
 export const api = {} as const;
-
