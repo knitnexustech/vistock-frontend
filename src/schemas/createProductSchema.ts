@@ -14,10 +14,7 @@ const createProductSchema = z.object({
     .max(100, "Description must not exceed 1000 characters")
     .optional(),
   item_group: z.string().min(1, "Category is required"),
-  image: z
-    .string()
-    .optional()
-    .or(z.literal("")),
+  image: z.string().optional(),
   size: z.string().min(1, "Size is required"),
   colour: z.string().max(50, "Color must not exceed 50 characters").optional(),
   quantity: z
@@ -39,9 +36,9 @@ const createProductSchema = z.object({
     .max(20, "Rack number must not exceed 20 characters"),
   MRP: z
     .number()
-    .min(0, "MRP must be 0 or greater")
     .max(999999.99, "MRP must not exceed ₹999,999.99")
-    .optional(),
+    .optional()
+    .or(z.nan().transform(() => undefined)),
   barcode: z
     .string()
     .max(50, "Barcode must not exceed 50 characters")
@@ -53,4 +50,3 @@ const createProductSchema = z.object({
 });
 
 export default createProductSchema;
-

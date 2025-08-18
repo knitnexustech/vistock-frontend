@@ -78,6 +78,9 @@ export default function AddProductForm() {
     mode: "onChange", // Enable real-time validation
   });
 
+  console.log("isValid", isValid);
+  console.log("errors", errors);
+
   const createProductMutation = useMutate<Product, CreateProductRequest>(
     PRODUCT_API_ENDPOINTS.CREATE,
     "POST",
@@ -94,11 +97,11 @@ export default function AddProductForm() {
         // Debug logging to see the actual error structure
         console.log("Full error object:", error);
         console.log("Error data:", error?.data);
-        
+
         // Handle structured validation errors from backend
         if (error?.message === "Validation failed" && error?.data?.details) {
           const details = error.data.details;
-          
+
           if (Array.isArray(details) && details.length > 0) {
             // Show each validation error with user-friendly field names
             details.forEach((detail: { field: string; message: string }) => {
@@ -134,7 +137,10 @@ export default function AddProductForm() {
     setImagePreview(null);
   };
 
-  const onSubmit = async (data: CreateProductFormData) => {
+  const onSubmit = async (data: CreateProductFormData, error: unknown) => {
+
+    console.log("error", error);
+    
     try {
       setIsUploading(true);
       let imageUrl = data.image || undefined;
@@ -404,9 +410,7 @@ export default function AddProductForm() {
               </Button>
               <Button
                 type="submit"
-                disabled={
-                  createProductMutation.isPending || isUploading || !isValid
-                }
+                disabled={createProductMutation.isPending || isUploading || !isValid}
                 className="bg-primary hover:bg-primary/90"
               >
                 {isUploading ? (
@@ -430,4 +434,3 @@ export default function AddProductForm() {
     </div>
   );
 }
-
