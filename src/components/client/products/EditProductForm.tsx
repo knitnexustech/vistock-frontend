@@ -51,7 +51,8 @@ import createProductSchema from "@/schemas/createProductSchema";
 import {
   compressAndUploadImage,
   generateImageLocation,
-} from "@/utils/compressAndUploadImage";
+  deleteImageFromS3,
+} from "@/utils/imageUtils";
 import LoadingState from "@/components/layout/LoadingState";
 import ErrorState from "@/components/layout/ErrorState";
 import { formatFieldName } from "@/utils/formatFieldName";
@@ -68,6 +69,7 @@ export default function EditProductForm({ productId }: EditProductFormProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImageLocation, setUploadedImageLocation] = useState<string | null>(null);
 
   // Fetch product data
   const {
@@ -146,9 +148,21 @@ export default function EditProductForm({ productId }: EditProductFormProps) {
         toast.success("Product updated successfully!");
         queryClient.invalidateQueries({ queryKey: queryKeys.products.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.products.detail(productId) });
+        setUploadedImageLocation(null);
         router.push(CLIENT_ROUTES.ALL_PRODUCTS);
       },
-      onError: (error: ApiError) => {
+      onError: async (error: ApiError) => {
+        // If image was uploaded but product update failed, delete the image
+        if (uploadedImageLocation) {
+          const deleteSuccess = await deleteImageFromS3(uploadedImageLocation);
+          if (deleteSuccess) {
+            console.log("Uploaded image deleted successfully after product update failure");
+          } else {
+            console.error("Failed to delete uploaded image after product update failure");
+          }
+          setUploadedImageLocation(null);
+        }
+
         // Debug logging to see the actual error structure
         console.log("Full error object:", error);
         console.log("Error data:", error?.data);
@@ -208,6 +222,7 @@ export default function EditProductForm({ productId }: EditProductFormProps) {
 
         if (uploadResult.success) {
           imageUrl = uploadResult.imageUrl;
+          setUploadedImageLocation(fileLocation);
           toast.success("Image uploaded successfully!");
         } else {
           toast.error(`Image upload failed: ${uploadResult.error}`);

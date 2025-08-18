@@ -1,5 +1,5 @@
 import Compressor from "compressorjs";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 
 export interface UploadImageResult {
@@ -59,6 +59,30 @@ export const compressAndUploadImage = async (
       success: false,
       error: error instanceof Error ? error.message : "Upload failed",
     };
+  }
+};
+
+// Helper function to delete an image from S3
+export const deleteImageFromS3 = async (fileLocation: string): Promise<boolean> => {
+  const s3Client = new S3Client({
+    credentials: {
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY!,
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_KEY!,
+    },
+    region: process.env.NEXT_PUBLIC_AWS_REGION!,
+  });
+
+  try {
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: process.env.NEXT_PUBLIC_AWS_BUCKET!,
+      Key: fileLocation,
+    });
+
+    await s3Client.send(deleteCommand);
+    return true;
+  } catch (error) {
+    console.error("Image deletion error:", error);
+    return false;
   }
 };
 

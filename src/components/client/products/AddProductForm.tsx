@@ -52,7 +52,8 @@ import createProductSchema from "@/schemas/createProductSchema";
 import {
   compressAndUploadImage,
   generateImageLocation,
-} from "@/utils/compressAndUploadImage";
+  deleteImageFromS3,
+} from "@/utils/imageUtils";
 import { useUserProfile } from "@/hooks/useUser";
 import { formatFieldName } from "@/utils/formatFieldName";
 
@@ -66,6 +67,7 @@ export default function AddProductForm() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImageLocation, setUploadedImageLocation] = useState<string | null>(null);
 
   const {
     register,
@@ -91,9 +93,21 @@ export default function AddProductForm() {
         reset();
         setSelectedImage(null);
         setImagePreview(null);
+        setUploadedImageLocation(null);
         router.push(CLIENT_ROUTES.ALL_PRODUCTS);
       },
-      onError: (error: ApiError) => {
+      onError: async (error: ApiError) => {
+        // If image was uploaded but product creation failed, delete the image
+        if (uploadedImageLocation) {
+          const deleteSuccess = await deleteImageFromS3(uploadedImageLocation);
+          if (deleteSuccess) {
+            console.log("Uploaded image deleted successfully after product creation failure");
+          } else {
+            console.error("Failed to delete uploaded image after product creation failure");
+          }
+          setUploadedImageLocation(null);
+        }
+
         // Debug logging to see the actual error structure
         console.log("Full error object:", error);
         console.log("Error data:", error?.data);
@@ -156,6 +170,7 @@ export default function AddProductForm() {
 
         if (uploadResult.success) {
           imageUrl = uploadResult.imageUrl;
+          setUploadedImageLocation(fileLocation);
           toast.success("Image uploaded successfully!");
         } else {
           toast.error(`Image upload failed: ${uploadResult.error}`);
