@@ -19,6 +19,11 @@ export function useGet<TData = any, TError = any>(
   return useQuery<TData, TError>({
     queryKey,
     queryFn: async () => {
+      // Wait for hydration to complete before making requests
+      if (!hasHydrated) {
+        throw new Error("Store not hydrated yet");
+      }
+
       // Replace parameters in endpoint if provided
       let finalEndpoint = endpoint;
       if (params) {
@@ -52,10 +57,15 @@ export function useMutate<TData = any, TVariables = any, TError = any>(
   method: "POST" | "PUT" | "PATCH" | "DELETE" = "POST",
   options?: Omit<UseMutationOptions<TData, TError, TVariables>, "mutationFn">
 ) {
-  const { token } = useAuthStore();
+  const { token, hasHydrated } = useAuthStore();
 
   return useMutation<TData, TError, TVariables>({
     mutationFn: async (variables: TVariables) => {
+      // Wait for hydration to complete before making requests
+      if (!hasHydrated) {
+        throw new Error("Store not hydrated yet");
+      }
+
       const url =
         typeof endpoint === "function" ? endpoint(variables) : endpoint;
 
