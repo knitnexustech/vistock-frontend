@@ -67,7 +67,9 @@ export default function AddProductForm() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadedImageLocation, setUploadedImageLocation] = useState<string | null>(null);
+  const [uploadedImageLocation, setUploadedImageLocation] = useState<
+    string | null
+  >(null);
 
   const {
     register,
@@ -79,9 +81,6 @@ export default function AddProductForm() {
     resolver: zodResolver(createProductSchema),
     mode: "onChange", // Enable real-time validation
   });
-
-  console.log("isValid", isValid);
-  console.log("errors", errors);
 
   const createProductMutation = useMutate<Product, CreateProductRequest>(
     PRODUCT_API_ENDPOINTS.CREATE,
@@ -99,18 +98,10 @@ export default function AddProductForm() {
       onError: async (error: ApiError) => {
         // If image was uploaded but product creation failed, delete the image
         if (uploadedImageLocation) {
-          const deleteSuccess = await deleteImageFromS3(uploadedImageLocation);
-          if (deleteSuccess) {
-            console.log("Uploaded image deleted successfully after product creation failure");
-          } else {
-            console.error("Failed to delete uploaded image after product creation failure");
-          }
+          await deleteImageFromS3(uploadedImageLocation);
+
           setUploadedImageLocation(null);
         }
-
-        // Debug logging to see the actual error structure
-        console.log("Full error object:", error);
-        console.log("Error data:", error?.data);
 
         // Handle structured validation errors from backend
         if (error?.message === "Validation failed" && error?.data?.details) {
@@ -152,9 +143,6 @@ export default function AddProductForm() {
   };
 
   const onSubmit = async (data: CreateProductFormData, error: unknown) => {
-
-    console.log("error", error);
-    
     try {
       setIsUploading(true);
       let imageUrl = data.image || undefined;
@@ -425,7 +413,9 @@ export default function AddProductForm() {
               </Button>
               <Button
                 type="submit"
-                disabled={createProductMutation.isPending || isUploading || !isValid}
+                disabled={
+                  createProductMutation.isPending || isUploading || !isValid
+                }
                 className="bg-primary hover:bg-primary/90"
               >
                 {isUploading ? (

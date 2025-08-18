@@ -38,7 +38,11 @@ import {
   ITEM_GROUPS,
   FLOOR_OPTIONS,
 } from "@/constants/product";
-import { Product, UpdateProductRequest, ProductDetailResponse } from "@/types/product";
+import {
+  Product,
+  UpdateProductRequest,
+  ProductDetailResponse,
+} from "@/types/product";
 import { queryKeys } from "@/lib/api/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 import FormInput from "@/components/shared/FormInput";
@@ -69,7 +73,9 @@ export default function EditProductForm({ productId }: EditProductFormProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadedImageLocation, setUploadedImageLocation] = useState<string | null>(null);
+  const [uploadedImageLocation, setUploadedImageLocation] = useState<
+    string | null
+  >(null);
 
   // Fetch product data
   const {
@@ -130,9 +136,9 @@ export default function EditProductForm({ productId }: EditProductFormProps) {
         barcode: product.barcode || "",
         comment: product.comment || "",
       };
-      
+
       reset(formData);
-      
+
       // Set image preview if product has an image
       if (product.image) {
         setImagePreview(product.image);
@@ -147,30 +153,24 @@ export default function EditProductForm({ productId }: EditProductFormProps) {
       onSuccess: () => {
         toast.success("Product updated successfully!");
         queryClient.invalidateQueries({ queryKey: queryKeys.products.all() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.products.detail(productId) });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.products.detail(productId),
+        });
         setUploadedImageLocation(null);
         router.push(CLIENT_ROUTES.ALL_PRODUCTS);
       },
       onError: async (error: ApiError) => {
         // If image was uploaded but product update failed, delete the image
         if (uploadedImageLocation) {
-          const deleteSuccess = await deleteImageFromS3(uploadedImageLocation);
-          if (deleteSuccess) {
-            console.log("Uploaded image deleted successfully after product update failure");
-          } else {
-            console.error("Failed to delete uploaded image after product update failure");
-          }
+          await deleteImageFromS3(uploadedImageLocation);
+
           setUploadedImageLocation(null);
         }
 
-        // Debug logging to see the actual error structure
-        console.log("Full error object:", error);
-        console.log("Error data:", error?.data);
-        
         // Handle structured validation errors from backend
         if (error?.message === "Validation failed" && error?.data?.details) {
           const details = error.data.details;
-          
+
           if (Array.isArray(details) && details.length > 0) {
             // Show each validation error with user-friendly field names
             details.forEach((detail: { field: string; message: string }) => {
@@ -233,14 +233,18 @@ export default function EditProductForm({ productId }: EditProductFormProps) {
       // Only send changed fields
       const updateData: UpdateProductRequest = {};
       if (data.name !== product?.name) updateData.name = data.name;
-      if (data.description !== product?.description) updateData.description = data.description;
-      if (data.item_group !== product?.item_group) updateData.item_group = data.item_group;
+      if (data.description !== product?.description)
+        updateData.description = data.description;
+      if (data.item_group !== product?.item_group)
+        updateData.item_group = data.item_group;
       if (imageUrl !== product?.image) updateData.image = imageUrl;
       if (data.size !== product?.size) updateData.size = data.size;
       if (data.colour !== product?.colour) updateData.colour = data.colour;
-      if (data.quantity !== product?.quantity) updateData.quantity = data.quantity;
+      if (data.quantity !== product?.quantity)
+        updateData.quantity = data.quantity;
       if (data.UOM !== product?.UOM) updateData.UOM = data.UOM;
-      if (data.warehouse !== product?.warehouse) updateData.warehouse = data.warehouse;
+      if (data.warehouse !== product?.warehouse)
+        updateData.warehouse = data.warehouse;
       if (data.floor !== product?.floor) updateData.floor = data.floor;
       if (data.rack_no !== product?.rack_no) updateData.rack_no = data.rack_no;
       if (data.MRP !== product?.MRP) updateData.MRP = data.MRP;
