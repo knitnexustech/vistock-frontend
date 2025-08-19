@@ -21,8 +21,6 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Product } from "@/types/product";
-import { useUserProfile } from "@/hooks/useUser";
-import LoadingState from "@/components/layout/LoadingState";
 
 interface CodeGenerateViewProps {
   product: Product;
@@ -38,15 +36,10 @@ export default function CodeGenerateView({ product }: CodeGenerateViewProps) {
   const qrRef = useRef<HTMLDivElement>(null);
   const barcodeRef = useRef<HTMLDivElement>(null);
 
-  // Get user profile to use user ID as tenant ID
-  const { data: user, isLoading: userLoading } = useUserProfile();
-
   const clientBaseUrl =
     process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "localhost:3000";
 
-  // Generate QR code URL using user ID as tenant ID
-  const tenantId = user?.id || "default";
-  const qrCodeUrl = `${clientBaseUrl}/${tenantId}/products/${product.barcode}`;
+  const qrCodeUrl = `${clientBaseUrl}/client/products/${product.item_code}`;
 
   const handleBack = () => {
     router.back();
@@ -82,13 +75,13 @@ export default function CodeGenerateView({ product }: CodeGenerateViewProps) {
     img.onload = () => {
       // Add padding around the code
       const padding = 40;
-      canvas.width = img.width + (padding * 2);
-      canvas.height = img.height + (padding * 2);
-      
+      canvas.width = img.width + padding * 2;
+      canvas.height = img.height + padding * 2;
+
       // Fill with white background
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
+
       // Draw the image with padding offset
       ctx.drawImage(img, padding, padding);
 
@@ -120,11 +113,12 @@ export default function CodeGenerateView({ product }: CodeGenerateViewProps) {
 
     const codeContent = ref.current.innerHTML;
     const codeTitle = type === "qr" ? "QR Code" : "Barcode";
-    
+
     // Define dimensions for each type
-    const dimensions = type === "qr" 
-      ? { width: "2in", height: "2in" }  // 2×2 inch for QR code
-      : { width: "3in", height: "2in" }; // 3×2 inch for barcode
+    const dimensions =
+      type === "qr"
+        ? { width: "2in", height: "2in" } // 2×2 inch for QR code
+        : { width: "3in", height: "2in" }; // 3×2 inch for barcode
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -164,7 +158,11 @@ export default function CodeGenerateView({ product }: CodeGenerateViewProps) {
               margin-bottom: 0.1in;
             }
             .code-container svg {
-              ${type === "qr" ? "width: 1.5in; height: 1.5in;" : "width: 2.5in; height: 0.8in;"}
+              ${
+                type === "qr"
+                  ? "width: 1.5in; height: 1.5in;"
+                  : "width: 2.5in; height: 0.8in;"
+              }
             }
             .product-info {
               text-align: center;
@@ -198,7 +196,11 @@ export default function CodeGenerateView({ product }: CodeGenerateViewProps) {
             <div class="product-info">
               <div class="product-name">${product.name}</div>
               <div class="item-code">Item Code: ${product.item_code}</div>
-              ${type === "barcode" ? `<div class="code-info">Barcode: ${product.barcode}</div>` : ""}
+              ${
+                type === "barcode"
+                  ? `<div class="code-info">Barcode: ${product.barcode}</div>`
+                  : ""
+              }
             </div>
           </div>
         </body>
@@ -213,11 +215,6 @@ export default function CodeGenerateView({ product }: CodeGenerateViewProps) {
       printWindow.close();
     }, 250);
   };
-
-  // Show loading if user data is still loading
-  if (userLoading) {
-    return <LoadingState message="Loading user profile..." />;
-  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-6">
@@ -279,7 +276,10 @@ export default function CodeGenerateView({ product }: CodeGenerateViewProps) {
           </div>
 
           {/* Tabs for QR Code and Barcode */}
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as CodeType)}>
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as CodeType)}
+          >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="qr" className="flex items-center gap-2">
                 <QrCodeIcon className="h-4 w-4" />
@@ -320,11 +320,7 @@ export default function CodeGenerateView({ product }: CodeGenerateViewProps) {
                 <>
                   <div className="flex justify-center" ref={qrRef}>
                     <div className="p-6 bg-white border-2 border-gray-200 rounded-lg">
-                      <QRCodeSVG
-                        value={qrCodeUrl}
-                        size={256}
-                        level="M"
-                      />
+                      <QRCodeSVG value={qrCodeUrl} size={256} level="M" />
                     </div>
                   </div>
 
@@ -366,7 +362,9 @@ export default function CodeGenerateView({ product }: CodeGenerateViewProps) {
             <TabsContent value="barcode" className="space-y-6">
               {/* Barcode Info */}
               <div className="p-4 bg-green-50 rounded-lg">
-                <h3 className="font-medium text-green-900 mb-2">Barcode Value</h3>
+                <h3 className="font-medium text-green-900 mb-2">
+                  Barcode Value
+                </h3>
                 <p className="text-sm text-green-700 break-all font-mono">
                   {product.barcode}
                 </p>
