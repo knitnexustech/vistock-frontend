@@ -8,7 +8,7 @@ interface ImageUploadProps {
   label?: string;
   required?: boolean;
   onImageSelect: (file: File) => void;
-  onImageRemove: () => void;
+  onImageRemove: () => void | Promise<void>;
   imagePreview: string | null;
   maxSizeMB?: number;
   acceptedFormats?: string[];

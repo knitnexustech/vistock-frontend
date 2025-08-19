@@ -201,14 +201,53 @@ export default function EditProductForm({ productId }: EditProductFormProps) {
     reader.readAsDataURL(file);
   };
 
-  const removeImage = () => {
-    setSelectedImage(null);
-    setImagePreview(product?.image || null);
+  // Helper function to extract S3 key from full image URL
+  const extractS3KeyFromUrl = (imageUrl: string): string | null => {
+    try {
+      const url = new URL(imageUrl);
+      // Remove the leading slash from pathname to get the S3 key
+      return url.pathname.substring(1);
+    } catch {
+      return null;
+    }
+  };
+
+  const removeImage = async () => {
+    // If user had selected a new image, delete it from S3 and revert to original
+    if (selectedImage) {
+      // Delete the uploaded image from S3 if it was uploaded
+      if (uploadedImageLocation) {
+        toast.info("Deleting uploaded image...");
+        const deleted = await deleteImageFromS3(uploadedImageLocation);
+        if (deleted) {
+          toast.success("Uploaded image deleted from storage");
+        }
+        setUploadedImageLocation(null);
+      }
+      
+      setSelectedImage(null);
+      // Revert to original product image
+      setImagePreview(product?.image || null);
+      toast.info("Reverted to original product image");
+    } else {
+      // Allow removing original image so user can select a new one
+      setSelectedImage(null);
+      setImagePreview(null);
+      toast.info("Image removed. Please select a new image before saving.");
+    }
   };
 
   const onSubmit = async (data: EditProductFormData) => {
     try {
       setIsUploading(true);
+      
+      // Validate that an image is present (either selected or existing)
+      if (!selectedImage && !imagePreview) {
+        toast.error("Product image is required. Please select an image.");
+        setIsUploading(false);
+        return;
+      }
+
       let imageUrl = data.image || undefined;
 
       // If there's a new selected image, upload it first
@@ -230,26 +269,22 @@ export default function EditProductForm({ productId }: EditProductFormProps) {
         }
       }
 
-      // Only send changed fields
-      const updateData: UpdateProductRequest = {};
-      if (data.name !== product?.name) updateData.name = data.name;
-      if (data.description !== product?.description)
-        updateData.description = data.description;
-      if (data.item_group !== product?.item_group)
-        updateData.item_group = data.item_group;
-      if (imageUrl !== product?.image) updateData.image = imageUrl;
-      if (data.size !== product?.size) updateData.size = data.size;
-      if (data.colour !== product?.colour) updateData.colour = data.colour;
-      if (data.quantity !== product?.quantity)
-        updateData.quantity = data.quantity;
-      if (data.UOM !== product?.UOM) updateData.UOM = data.UOM;
-      if (data.warehouse !== product?.warehouse)
-        updateData.warehouse = data.warehouse;
-      if (data.floor !== product?.floor) updateData.floor = data.floor;
-      if (data.rack_no !== product?.rack_no) updateData.rack_no = data.rack_no;
-      if (data.MRP !== product?.MRP) updateData.MRP = data.MRP;
-      if (data.barcode !== product?.barcode) updateData.barcode = data.barcode;
-      if (data.comment !== product?.comment) updateData.comment = data.comment;
+      // Send all fields except item_code and barcode (non-editable fields)
+      const updateData: UpdateProductRequest = {
+        name: data.name,
+        description: data.description,
+        item_group: data.item_group,
+        image: imageUrl,
+        size: data.size,
+        colour: data.colour,
+        quantity: data.quantity,
+        UOM: data.UOM,
+        warehouse: data.warehouse,
+        floor: data.floor,
+        rack_no: data.rack_no,
+        MRP: data.MRP,
+        comment: data.comment,
+      };
 
       updateProductMutation.mutate(updateData);
     } catch (error) {
@@ -302,6 +337,7 @@ export default function EditProductForm({ productId }: EditProductFormProps) {
                   error={errors.item_code?.message}
                   register={register("item_code")}
                   required
+                  disabled
                 />
 
                 <FormInput
